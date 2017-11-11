@@ -29,50 +29,49 @@ local baton = {
 
 local keyboardSource = {}
 
-function keyboardSource:key(key)
+function keyboardSource.key(key)
   return love.keyboard.isDown(key) and 1 or 0
 end
 
-function keyboardSource:sc(sc)
+function keyboardSource.sc(sc)
   return love.keyboard.isScancodeDown(sc) and 1 or 0
 end
 
-function keyboardSource:mouse(button)
+function keyboardSource.mouse(button)
   return love.mouse.isDown(tonumber(button)) and 1 or 0
 end
 
 local joystickSource = {}
 
-function joystickSource:axis(value)
-  if self.joystick then
-    local axis, direction = value:match '(.+)([%+%-])'
-    local v = tonumber(axis) and self.joystick:getAxis(tonumber(axis))
-                              or self.joystick:getGamepadAxis(axis)
-    if direction == '-' then v = -v end
-    return v > 0 and v or 0
+function joystickSource.axis(axis, direction, joystick)
+  local v = tonumber(axis) and joystick:getAxis(tonumber(axis))
+                            or joystick:getGamepadAxis(axis)
+  if direction == '-' then v = -v end
+  return v > 0 and v or 0
+end
+
+function joystickSource.button(button, _, joystick)
+  if tonumber(button) then
+    return joystick:isDown(tonumber(button)) and 1 or 0
+  else
+    return joystick:isGamepadDown(button) and 1 or 0
+  end
+end
+
+function joystickSource.hat(hat, direction, joystick)
+  if joystick:getHat(hat) == direction then
+      return 1
   end
   return 0
 end
 
-function joystickSource:button(button)
-  if self.joystick then
-    if tonumber(button) then
-      return self.joystick:isDown(tonumber(button)) and 1 or 0
-    else
-      return self.joystick:isGamepadDown(button) and 1 or 0
-    end
-  end
-  return 0
-end
+local regex = '(.+):(.-)([+%-]?)'
+local function parseSource (source)
+  local type, name, direction = source:match(regex)
 
-function joystickSource:hat(value)
-  if self.joystick then
-      local hat, direction = value:match('(%d)(.+)')
-      if self.joystick:getHat(hat) == direction then
-          return 1
-      end
-  end
-  return 0
+  direction = direction == '-' and -1 or 1
+
+  return type, name, direction
 end
 
 local Player = {}
@@ -86,15 +85,15 @@ function Player:update()
     -- get raw value
     control.rawValue = 0
     for _, s in ipairs(self.controls[controlName]) do
-      local type, value = s:match '(.+):(.+)'
+      local type, name, direction = parseSource(s)
       if keyboardSource[type] then
-        if keyboardSource[type](self, value) == 1 then
+        if keyboardSource[type](name) == 1 then
           control.rawValue = 1
           keyboardUsed = true
           break
         end
-      elseif joystickSource[type] then
-        local v = joystickSource[type](self, value)
+      elseif joystickSource[type] and self.joystick then
+        local v = joystickSource[type](name, direction, self.joystick)
         if v > 0 then
           joystickUsed = true
           control.rawValue = control.rawValue + v
@@ -122,7 +121,7 @@ function Player:update()
   -- update pairs
   for pairName, pair in pairs(self._pairs) do
     local p = self.pairs[pairName]
-    
+
     -- raw value
     pair.rawX, pair.rawY = self._controls[p[2]].rawValue - self._controls[p[1]].rawValue,
       self._controls[p[4]].rawValue - self._controls[p[3]].rawValue
