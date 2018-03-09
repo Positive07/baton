@@ -4,19 +4,15 @@ local baton = {
   _URL = 'https://github.com/tesselode/baton',
   _LICENSE = [[
     MIT License
-
     Copyright (c) 2018 Andrew Minnich
-
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights
     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
     copies of the Software, and to permit persons to whom the Software is
     furnished to do so, subject to the following conditions:
-
     The above copyright notice and this permission notice shall be included in all
     copies or substantial portions of the Software.
-
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -67,7 +63,7 @@ end
 function joystickSource:hat(value)
   local hat, direction = value:match('(%d)(.+)')
   if self.joystick:getHat(hat) == direction then
-      return 1
+    return 1
   end
   return 0
 end
@@ -82,27 +78,39 @@ function Player:update()
   -- update controls
   for controlName, control in pairs(self._controls) do
     -- get raw value
-    control.rawValue = 0
+    control.rawKeyboard = 0
+    control.rawJoystick = 0
+
     for _, s in ipairs(self.controls[controlName]) do
       local type, value = s:match '(.+):(.+)'
       if keyboardSource[type] then
         if keyboardSource[type](self, value) == 1 then
-          control.rawValue = 1
+          control.rawKeyboard = 1
           keyboardUsed = true
           break
         end
-      elseif joystickSource[type] and self.joystick then
+      elseif not keyboardUsed and joystickSource[type] and self.joystick then
         local v = joystickSource[type](self, value)
         if v > 0 then
-          joystickUsed = true
-          control.rawValue = control.rawValue + v
-          if control.rawValue >= 1 then
-            control.rawValue = 1
-            break
+          if v >= self.deadzone then
+            joystickUsed = true
+          end
+          control.rawJoystick = control.rawJoystick + v
+          if control.rawJoystick >= 1 then
+            control.rawJoystick = 1
           end
         end
       end
     end
+
+  end
+
+  for _, control in pairs(self._controls) do
+    control.rawValue = (keyboardUsed and control.rawKeyboard or
+      (joystickUsed and control.rawJoystick or 0))
+
+    control.rawKeyboard = nil
+    control.rawJoystick = nil
 
     -- deadzone
     control.value = 0
