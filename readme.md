@@ -129,15 +129,15 @@ released = player:released(control)
 These functions are most applicable for controls that act as buttons, such as a shoot button. That being said, they can be used for any control, which is useful if you want to, for example, use a movement control as a discrete button press to operate a menu.
 
 #### Changing controls
-At any time, you can change the sources for a player's controls by modifying the controls table, which can be accessed via `player.controls`.
+At any time, you can change the sources for a player's controls by modifying the controls table, which can be accessed via `player.config.controls`.
 
-**Note**: removing a control entirely (by running `player.controls.left = nil`, for example) will cause errors. If you want to disable a control, you can set it to an empty table, thus removing all of the sources. Also note that the player object cannot detect if new controls are added.
+**Note**: removing a control entirely (by running `player.config.controls.left = nil`, for example) will cause errors. If you want to disable a control, you can set it to an empty table, thus removing all of the sources. Also note that the player object cannot detect if new controls are added.
 
 #### Changing the deadzone
-You can change the deadzone of a player by setting `player.deadzone` to a number between `0` and `1`. The deadzone is set to `0.5` by default. If you set `player.squareDeadzone` to `true`, axis pairs will apply deadzone individually to each axis.
+You can change the deadzone of a player by setting `player.config.deadzone` to a number between `0` and `1`. The deadzone is set to `0.5` by default. If you set `player.config.squareDeadzone` to `true`, axis pairs will apply deadzone individually to each axis.
 
 #### Reassigning joysticks
-If you need to change the joystick associated with a player, just set `player.joystick` (which is just a standard LÖVE [Joystick](https://love2d.org/wiki/Joystick) object).
+If you need to change the joystick associated with a player, just set `player.config.joystick` (which is just a standard LÖVE [Joystick](https://love2d.org/wiki/Joystick) object).
 
 #### Getting the active input device
 At any time, only the keyboard/mouse sources or the gamepad sources for a player will be active. A device will be considered active if any of the sources for that device exceed the deadzone. The keyboard and mouse will always take precedence over the gamepad.

@@ -12,9 +12,8 @@ local player = baton.new {
     move = {'left', 'right', 'up', 'down'}
   },
   joystick = love.joystick.getJoysticks()[1],
+  deadzone = .33,
 }
-player.deadzone = .33
-player.squareDeadzone = false
 
 local pairDisplayAlpha = 0
 local pairDisplayTargetAlpha = 0
@@ -81,8 +80,8 @@ function love.draw()
   love.graphics.setColor(255, 255, 255)
   love.graphics.circle('line', 0, 0, pairDisplayRadius)
 
-  local r = pairDisplayRadius * player.deadzone
-  if player.squareDeadzone then
+  local r = pairDisplayRadius * player.config.deadzone
+  if player.config.squareDeadzone then
     love.graphics.rectangle('line', -r, -r, r*2, r*2)
   else
     love.graphics.circle('line', 0, 0, r)
